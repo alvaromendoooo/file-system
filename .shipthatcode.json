@@ -1,0 +1,50 @@
+{
+  "course": "build-file-system",
+  "language": "rust",
+  "language_id": 1073,
+  "entrypoint": "main.rs",
+  "version": 1,
+  "content_hash": "a5eb5dafd3f3362f",
+  "lessons": [
+    {
+      "slug": "what-is-fs",
+      "tests_hash": "d21d35eeaf9a"
+    },
+    {
+      "slug": "superblock",
+      "tests_hash": "69463e93821a"
+    },
+    {
+      "slug": "bitmaps",
+      "tests_hash": "9d636f4be2dc"
+    },
+    {
+      "slug": "inode",
+      "tests_hash": "5190f4485672"
+    },
+    {
+      "slug": "extents",
+      "tests_hash": "74a1541c5f96"
+    },
+    {
+      "slug": "read-write",
+      "tests_hash": "b238cb68845d"
+    },
+    {
+      "slug": "directories",
+      "tests_hash": "4332dacfe705"
+    },
+    {
+      "slug": "path-resolution",
+      "tests_hash": "abf7a0a57db1"
+    },
+    {
+      "slug": "journaling",
+      "tests_hash": "2b00a2ef37f6"
+    },
+    {
+      "slug": "modern-fs",
+      "tests_hash": "693087557179"
+    }
+  ]
+}
