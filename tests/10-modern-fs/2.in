@@ -1,0 +1,2 @@
+xfs=journal,extents,dir_index
+WANT extents

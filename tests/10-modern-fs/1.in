@@ -1,0 +1,5 @@
+ext4=journal,extents
+btrfs=cow,snapshots,checksums
+zfs=cow,snapshots,checksums,raid
+xfs=journal,extents
+WANT cow,snapshots

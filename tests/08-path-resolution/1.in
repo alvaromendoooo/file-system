@@ -1,0 +1,7 @@
+DIR 1 home=10
+DIR 1 etc=20
+DIR 10 alice=30
+DIR 30 notes=99
+WALK /home/alice/notes
+WALK /etc/missing
+WALK /

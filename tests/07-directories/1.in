@@ -1,0 +1,6 @@
+ENTRY foo 5
+ENTRY bar 7
+ENTRY baz 0
+LOOKUP foo
+LOOKUP missing
+LOOKUP baz

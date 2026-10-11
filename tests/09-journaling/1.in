@@ -1,0 +1,9 @@
+BEGIN 1
+WRITE 5 hello
+COMMIT 1
+BEGIN 2
+WRITE 5 world
+WRITE 3 foo
+COMMIT 2
+BEGIN 3
+WRITE 5 dropped
