@@ -33,6 +33,5 @@ fn main() {
             _ => break
         }
     }
-
-    println!("{}", total_blocks_used as i32);
+    //println!("{}", total_blocks_used as i32);
 }
