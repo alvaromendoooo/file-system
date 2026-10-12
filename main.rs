@@ -41,6 +41,43 @@ pub struct Journal {
     pub current_txn_writes: HashMap<i32, String>,
 }
 
+#[derive(Debug, Default)]
+pub struct FileSystems {
+    pub map_name_features: HashMap<String, Vec<String>>,
+}
+
+impl FileSystems {
+    pub fn register_file_system(&mut self, input: String) {
+        let splitted_input: Vec<&str> = input.split("=").collect();
+
+        if splitted_input.len() < 2 {
+            return;
+        }
+
+        let fs_name = splitted_input[0];
+        let features = splitted_input[1];
+
+        let splitted_features: Vec<&str> = features.split(",").collect();
+
+        self.map_name_features.insert(fs_name.to_string(), splitted_features.iter().map(|&v| v.to_string()).collect());
+    }
+
+    pub fn match_fs_features(&self, features: String) -> String {
+        let splitted_features: Vec<&str> = features.split(",").collect();
+
+        let mut coincident_keys: Vec<String> = self.map_name_features
+            .iter()
+            .filter(|(_, v)| {
+                splitted_features.iter().all(|item| v.iter().any(|val| val == *item))
+            })
+            .map(|(k, _)| k.clone())
+            .collect();
+        coincident_keys.sort();
+
+        coincident_keys.join(" ")
+    }
+}
+
 impl Journal {
     pub fn begin_txn(&mut self, txn_id: i32) {
         self.current_txn_id = Some(txn_id);
@@ -265,6 +302,7 @@ fn main() {
     let mut journal_registry = Journal::default();
     let mut block_id = 0;
     let mut block_data = String::new();
+    let mut file_systems = FileSystems::default();
 
     for line in stdin.lock().lines() {
         let l = line.unwrap();
@@ -329,7 +367,8 @@ fn main() {
                 let txn_id = parts[1].parse().unwrap();
                 journal_registry.commit_txn(txn_id);
             },
-            _ => break
+            "WANT" => println!("{}", file_systems.match_fs_features(parts[1].to_string())),
+            _ => file_systems.register_file_system(parts[0].to_string()),
         }
     }
     println!("{}", journal_registry.display_commited_blocks());
