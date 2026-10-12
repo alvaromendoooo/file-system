@@ -34,6 +34,49 @@ pub struct DirectoryRegistry {
     pub directories: Vec<Directory>,
 }
 
+#[derive(Debug, Default)]
+pub struct Journal {
+    pub committed_blocks: HashMap<i32, String>,
+    pub current_txn_id: Option<i32>,
+    pub current_txn_writes: HashMap<i32, String>,
+}
+
+impl Journal {
+    pub fn begin_txn(&mut self, txn_id: i32) {
+        self.current_txn_id = Some(txn_id);
+        self.current_txn_writes.clear();
+    }
+
+    pub fn write_block(&mut self, block_id: i32, data: String) {
+        if self.current_txn_id.is_some() {
+            self.current_txn_writes.insert(block_id, data);
+        }
+    }
+
+    pub fn commit_txn(&mut self, txn_id: i32) {
+        if let Some(active_id) = self.current_txn_id {
+            if active_id == txn_id {
+                for (block_id, data) in self.current_txn_writes.drain() {
+                    self.committed_blocks.insert(block_id, data);
+                }
+            }
+        }
+        self.current_txn_id = None;
+        self.current_txn_writes.clear();
+    }
+
+    pub fn display_commited_blocks(&self) -> String {
+        let mut entries: Vec<(&i32, &String)> = self.committed_blocks.iter().collect();
+        entries.sort_by_key(|&(block_id, _)| block_id);
+
+        entries
+            .iter()
+            .map(|(block_id, data)| format!("{}={}", block_id, data))
+            .collect::<Vec<_>>()
+            .join("\n")
+    }
+}
+
 impl DirectoryRegistry {
     pub fn register_directory(&mut self, inode: i32, rest: String) {
         let splitted_content: Vec<&str> = rest.split('=').collect();
@@ -219,6 +262,9 @@ fn main() {
     let mut bsize = 0;
     let mut entry_inode_registry = EntryInodeRegistry::default();
     let mut directory_registry = DirectoryRegistry::default();
+    let mut journal_registry = Journal::default();
+    let mut block_id = 0;
+    let mut block_data = String::new();
 
     for line in stdin.lock().lines() {
         let l = line.unwrap();
@@ -270,9 +316,22 @@ fn main() {
                     Err(e) => println!("{}", e),
                 }
             },
+            "BEGIN" => {
+                let txn_id = parts[1].parse().unwrap();
+                journal_registry.begin_txn(txn_id);
+            },
+            "WRITE" => {
+                let block_id = parts[1].parse().unwrap();
+                let block_data = parts[2].to_string();
+                journal_registry.write_block(block_id, block_data);
+            },
+            "COMMIT" => {
+                let txn_id = parts[1].parse().unwrap();
+                journal_registry.commit_txn(txn_id);
+            },
             _ => break
         }
     }
-
+    println!("{}", journal_registry.display_commited_blocks());
     //println!("{}", total_blocks_used as i32);
 }
