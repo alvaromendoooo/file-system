@@ -5,6 +5,40 @@ pub struct BitMap {
     pub blocks: Vec<i32>,
 }
 
+#[derive(Debug, Default)]
+pub struct Extent {
+    pub logical_start: i32,
+    pub length: i32,
+    pub physical_start: i32,
+}
+
+#[derive(Debug, Default)]
+pub struct ExtentRegistry {
+    pub extents: Vec<Extent>,
+}
+
+impl ExtentRegistry {
+    pub fn register_new_extent(&mut self, logic_start: i32, length: i32, phys_start: i32) {
+        let extent = Extent {
+            logical_start: logic_start,
+            length,
+            physical_start: phys_start
+        };
+
+        self.extents.push(extent);
+    }
+
+    pub fn lookup(&self, logical: i32) -> String {
+        if let Some(extent) = self.extents.iter().find(|e| {
+            logical >= e.logical_start && logical < e.logical_start + e.length
+        }) {
+            format!("{}", extent.physical_start + (logical - extent.logical_start))
+        } else {
+            format!("HOLE")
+        }
+    }
+}
+
 impl BitMap {
     pub fn new() -> Self {
         Self {
@@ -96,6 +130,7 @@ fn main() {
     let mut block_size = 0.0;
     let mut total_blocks_used = 0.0;
     let mut bitmap = BitMap::new();
+    let mut extent_registry = ExtentRegistry::default();
 
     for line in stdin.lock().lines() {
         let l = line.unwrap();
@@ -128,6 +163,9 @@ fn main() {
             },
             "USED" => println!("{}", bitmap.used_blocks()),
             "SIZE" => println!("{}", blocks_inode_reference(parts[1].parse().unwrap(), parts[3].parse().unwrap())),
+            "EXTENT" => extent_registry.register_new_extent(parts[1].parse().unwrap(), parts[2].parse().unwrap(), 
+                                                    parts[3].parse().unwrap()),
+            "LOOKUP" => println!("{}", extent_registry.lookup(parts[1].parse().unwrap())),
             _ => break
         }
     }
