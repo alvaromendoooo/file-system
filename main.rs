@@ -123,18 +123,14 @@ pub fn blocks_inode_reference(inode_size: i32, block_size: i32) -> String {
 
 pub fn read_spans_block(block_size: &mut i32, offset: i32, length: i32) -> String {
     let bsize = *block_size;
-    let mut first_block = 0;
-    let mut last_block = 0;
-
-    if offset < bsize && length + offset <= bsize {
-        first_block = 0;
-        last_block = 0;
-    } else if offset < bsize && length + offset > bsize {
-        last_block += 1;
-    } else {
-        first_block += 1;
-        last_block += 1;
+    
+    if bsize <= 0 || length <= 0 {
+        return format!("0 0");
     }
+
+    let first_block = offset / bsize;
+
+    let last_block = (offset + length - 1) / bsize;
 
     format!("{} {}", first_block, last_block)
 }
