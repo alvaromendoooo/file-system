@@ -64,7 +64,31 @@ pub fn validate_supermagic_block_number(magic_str: &str) -> String {
     }
 }
 
+pub fn blocks_inode_reference(inode_size: i32, block_size: i32) -> String {
+    let mut count_direct_blocks = 0;
+    let mut count_indirect_blocks = 0;
+    let mut count_double_indirect_blocks = 0;
+
+    let num_blocks_needed = (inode_size as f32 / block_size as f32).ceil() as i32;
+
+    if num_blocks_needed <= MAX_DIRECT {
+        count_direct_blocks = num_blocks_needed;
+    } 
+    else if num_blocks_needed <= MAX_INDIRECT {
+        count_direct_blocks = MAX_DIRECT;
+    } 
+    else {
+        count_direct_blocks = MAX_DIRECT;
+        count_indirect_blocks = 1;         
+        count_double_indirect_blocks = 1; 
+    }
+
+    format!("DIRECT {}\nINDIRECT {}\nDOUBLE {}\n", count_direct_blocks, count_indirect_blocks, count_double_indirect_blocks)
+}
+
 const EXT2_MAGIC_NUMBER: &str = "0xEF53";
+const MAX_DIRECT: i32 = 12;
+const MAX_INDIRECT: i32 = 12 + 1024;
 
 fn main() {
     let stdin = io::stdin();
@@ -102,6 +126,7 @@ fn main() {
                 }
             },
             "USED" => println!("{}", bitmap.used_blocks()),
+            "SIZE" => println!("{}", blocks_inode_reference(parts[1].parse().unwrap(), parts[3].parse().unwrap())),
             _ => break
         }
     }
