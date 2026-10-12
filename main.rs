@@ -76,6 +76,7 @@ pub fn blocks_inode_reference(inode_size: i32, block_size: i32) -> String {
     } 
     else if num_blocks_needed <= MAX_INDIRECT {
         count_direct_blocks = MAX_DIRECT;
+        count_indirect_blocks = 1;
     } 
     else {
         count_direct_blocks = MAX_DIRECT;
