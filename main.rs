@@ -1,4 +1,4 @@
-use std::io::{self, BufRead};
+use std::{collections::HashMap, io::{self, BufRead}};
 
 #[derive(Debug)]
 pub struct BitMap {
@@ -15,6 +15,25 @@ pub struct Extent {
 #[derive(Debug, Default)]
 pub struct ExtentRegistry {
     pub extents: Vec<Extent>,
+}
+
+#[derive(Debug, Default)]
+pub struct EntryInodeRegistry {
+    pub entry_inode: HashMap<String, i32>
+}
+
+impl EntryInodeRegistry {
+    pub fn register_entry_inode(&mut self, entry: String, inode: i32) {
+        self.entry_inode.insert(entry, inode);
+    }
+
+    pub fn lookup(&self, entry: String) -> Result<i32, &'static str> {
+        if let Some(inode) = self.entry_inode.get(&entry).copied() {
+            Ok(inode)
+        } else {
+            Err("ENOENT")
+        }
+    }
 }
 
 impl ExtentRegistry {
@@ -146,6 +165,7 @@ fn main() {
     let mut bitmap = BitMap::new();
     let mut extent_registry = ExtentRegistry::default();
     let mut bsize = 0;
+    let mut entry_inode_registry = EntryInodeRegistry::default();
 
     for line in stdin.lock().lines() {
         let l = line.unwrap();
@@ -180,9 +200,16 @@ fn main() {
             "SIZE" => println!("{}", blocks_inode_reference(parts[1].parse().unwrap(), parts[3].parse().unwrap())),
             "EXTENT" => extent_registry.register_new_extent(parts[1].parse().unwrap(), parts[2].parse().unwrap(), 
                                                     parts[3].parse().unwrap()),
-            "LOOKUP" => println!("{}", extent_registry.lookup(parts[1].parse().unwrap())),
+            "LOOKUP" => {
+                //println!("{}", extent_registry.lookup(parts[1].parse().unwrap()));
+                match entry_inode_registry.lookup(parts[1].to_string()) {
+                    Ok(result) => println!("{}", result),
+                    Err(e) => println!("{}", e),
+                }
+            },
             "BSIZE" => bsize = parts[1].parse().unwrap(),
             "READ" => println!("{}", read_spans_block(&mut bsize, parts[1].parse().unwrap(), parts[2].parse().unwrap())),
+            "ENTRY" => entry_inode_registry.register_entry_inode(parts[1].to_string(), parts[2].parse().unwrap()),
             _ => break
         }
     }
