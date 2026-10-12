@@ -121,6 +121,24 @@ pub fn blocks_inode_reference(inode_size: i32, block_size: i32) -> String {
     format!("DIRECT {}\nINDIRECT {}\nDOUBLE {}\n", count_direct_blocks, count_indirect_blocks, count_double_indirect_blocks)
 }
 
+pub fn read_spans_block(block_size: &mut i32, offset: i32, length: i32) -> String {
+    let bsize = *block_size;
+    let mut first_block = 0;
+    let mut last_block = 0;
+
+    if offset < bsize && length + offset <= bsize {
+        first_block = 0;
+        last_block = 0;
+    } else if offset < bsize && length + offset > bsize {
+        last_block += 1;
+    } else {
+        first_block += 1;
+        last_block += 1;
+    }
+
+    format!("{} {}", first_block, last_block)
+}
+
 const EXT2_MAGIC_NUMBER: &str = "0xEF53";
 const MAX_DIRECT: i32 = 12;
 const MAX_INDIRECT: i32 = 12 + 1024;
@@ -131,6 +149,7 @@ fn main() {
     let mut total_blocks_used = 0.0;
     let mut bitmap = BitMap::new();
     let mut extent_registry = ExtentRegistry::default();
+    let mut bsize = 0;
 
     for line in stdin.lock().lines() {
         let l = line.unwrap();
@@ -166,6 +185,8 @@ fn main() {
             "EXTENT" => extent_registry.register_new_extent(parts[1].parse().unwrap(), parts[2].parse().unwrap(), 
                                                     parts[3].parse().unwrap()),
             "LOOKUP" => println!("{}", extent_registry.lookup(parts[1].parse().unwrap())),
+            "BSIZE" => bsize = parts[1].parse().unwrap(),
+            "READ" => println!("{}", read_spans_block(&mut bsize, parts[1].parse().unwrap(), parts[2].parse().unwrap())),
             _ => break
         }
     }
