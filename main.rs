@@ -22,6 +22,58 @@ pub struct EntryInodeRegistry {
     pub entry_inode: HashMap<String, i32>
 }
 
+#[derive(Debug)]
+pub struct Directory {
+    pub inode: i32,
+    pub content: String,
+    pub inode_content: i32,
+}
+
+#[derive(Debug, Default)]
+pub struct DirectoryRegistry {
+    pub directories: Vec<Directory>,
+}
+
+impl DirectoryRegistry {
+    pub fn register_directory(&mut self, inode: i32, rest: String) {
+        let splitted_content: Vec<&str> = rest.split('=').collect();
+
+        if splitted_content.len() < 2 {
+            return;
+        }
+
+        let content = splitted_content[0].to_string();
+        let inode_content = splitted_content[1].parse::<i32>().unwrap_or(0);
+
+        let directory_created = Directory {
+            inode,
+            content,
+            inode_content,
+        };
+
+        self.directories.push(directory_created);
+    }
+
+    pub fn walk_directories(&self, path: String) -> Result<i32, &'static str> {
+        if path == "/" {
+            return Ok(1);
+        }
+
+        let path_split: Vec<&str> = path.split('/').collect();
+
+        if let Some(last_path) = path_split.last() {
+            let last_directory_metadata = self.directories
+                .iter()
+                .find(|directory| directory.content == *last_path)
+                .ok_or("ENOENT")?;
+
+            Ok(last_directory_metadata.inode_content)
+        } else {
+            Err("ENOENT")
+        }
+    }
+}
+
 impl EntryInodeRegistry {
     pub fn register_entry_inode(&mut self, entry: String, inode: i32) {
         self.entry_inode.insert(entry, inode);
@@ -166,6 +218,7 @@ fn main() {
     let mut extent_registry = ExtentRegistry::default();
     let mut bsize = 0;
     let mut entry_inode_registry = EntryInodeRegistry::default();
+    let mut directory_registry = DirectoryRegistry::default();
 
     for line in stdin.lock().lines() {
         let l = line.unwrap();
@@ -210,6 +263,13 @@ fn main() {
             "BSIZE" => bsize = parts[1].parse().unwrap(),
             "READ" => println!("{}", read_spans_block(&mut bsize, parts[1].parse().unwrap(), parts[2].parse().unwrap())),
             "ENTRY" => entry_inode_registry.register_entry_inode(parts[1].to_string(), parts[2].parse().unwrap()),
+            "DIR" => directory_registry.register_directory(parts[1].parse().unwrap(), parts[2].to_string()),
+            "WALK" => {
+                match directory_registry.walk_directories(parts[1].to_string()) {
+                    Ok(inode) => println!("{}", inode),
+                    Err(e) => println!("{}", e),
+                }
+            },
             _ => break
         }
     }
